@@ -1,0 +1,29 @@
+/ app/views/ct600/returns/new.html.slim
+h1 Enter CT600 Figures
+
+= form_with scope: :ct600, url: ct600_returns_path, local: true do |f|
+  .field
+    = f.label :non_trading_loan_profits, "Non-Trading Loan Profits (£)"
+    = f.number_field :non_trading_loan_profits, step: 0.01, value: @form[:non_trading_loan_profits]
+    - if @errors&.dig(:non_trading_loan_profits)
+      span.error= @errors[:non_trading_loan_profits].join(", ")
+
+  .field
+    = f.label :profits_before_other_deductions_and_reliefs, "Profits Before Other Deductions and Reliefs (£)"
+    = f.number_field :profits_before_other_deductions_and_reliefs, step: 0.01, value: @form[:profits_before_other_deductions_and_reliefs]
+    - if @errors&.dig(:profits_before_other_deductions_and_reliefs)
+      span.error= @errors[:profits_before_other_deductions_and_reliefs].join(", ")
+
+  .field
+    = f.label :losses_on_unquoted_shares, "Losses on Unquoted Shares (£)"
+    = f.number_field :losses_on_unquoted_shares, step: 0.01, value: @form[:losses_on_unquoted_shares]
+    - if @errors&.dig(:losses_on_unquoted_shares)
+      span.error= @errors[:losses_on_unquoted_shares].join(", ")
+
+  .field
+    = f.label :management_expenses, "Management Expenses (£)"
+    = f.number_field :management_expenses, step: 0.01, value: @form[:management_expenses]
+    - if @errors&.dig(:management_expenses)
+      span.error= @errors[:management_expenses].join(", ")
+
+  = f.submit "Calculate"

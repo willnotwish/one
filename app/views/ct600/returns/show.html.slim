@@ -1,0 +1,20 @@
+/ app/views/ct600/returns/show.html.slim
+h1 Calculated CT600 Figures
+
+p
+  strong Non-Trading Loan Profits:
+  = result.submission[:non_trading_loan_profits]
+
+p
+  strong Profits Before Other Deductions and Reliefs:
+  = result.submission[:profits_before_other_deductions_and_reliefs]
+
+p
+  strong Losses on Unquoted Shares:
+  = result.submission[:losses_on_unquoted_shares]
+
+p
+  strong Management Expenses:
+  = result.submission[:management_expenses]
+
+= link_to "Back", new_ct600_return_path

@@ -1,0 +1,16 @@
+en:
+  dry_validation:
+    errors:
+      rules:
+        losses_on_unquoted_shares:
+          max_scale_exceeded: "must not have more than %{max_scale} decimal places."
+          hmrc9166: "must not exceed profits before other deductions and reliefs."
+        management_expenses:
+          max_scale_exceeded: "must not have more than %{max_scale} decimal places."
+          hmrc9167: "must not exceed profits before other deductions and reliefs minus losses."
+        amount:
+          max_scale_exceeded: "must not have more than %{max_scale} decimal places."
+        non_trading_loan_profits:
+          max_scale_exceeded: "must not have more than %{max_scale} decimal places."
+        profits_before_other_deductions_and_reliefs:
+          max_scale_exceeded: "must not have more than %{max_scale} decimal places."
