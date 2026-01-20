@@ -78,3 +78,7 @@ gem "slim", "~> 5.2"
 
 gem "dry-validation", "~> 1.10"
 gem "dry-struct", "~> 1.6"
+
+gem "dry-operation", "~> 1.0"
+
+gem "simple_form", "~> 5.4"

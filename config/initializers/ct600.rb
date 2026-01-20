@@ -34,6 +34,14 @@ module Ct600
           element: 'NonTradingLoanProfitsAndGains',
           namespace: 'ct'
         },
+        profits_before_other_deductions_and_reliefs: {
+          element: 'ProfitsBeforeOtherDeductionsAndReliefs',
+          namespace: 'ct'
+        },
+        losses_on_unquoted_shares: {
+          element: 'LossesOnUnquotedShares',
+          namespace: 'ct'
+        },
         management_expenses: {
           element: 'ManagementExpenses',
           namespace: 'ct'

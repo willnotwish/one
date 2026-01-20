@@ -126,6 +126,13 @@ GEM
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.1)
       zeitwerk (~> 2.6)
+    dry-monads (1.9.0)
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 1.1)
+      zeitwerk (~> 2.6)
+    dry-operation (1.0.1)
+      dry-monads (~> 1.6)
+      zeitwerk (~> 2.6)
     dry-schema (1.13.4)
       concurrent-ruby (~> 1.0)
       dry-configurable (~> 1.0, >= 1.0.1)
@@ -385,6 +392,9 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
+    simple_form (5.4.1)
+      actionpack (>= 7.0)
+      activemodel (>= 7.0)
     slim (5.2.1)
       temple (~> 0.10.0)
       tilt (>= 2.1.0)
@@ -466,6 +476,7 @@ DEPENDENCIES
   byebug (~> 12.0)
   capybara
   debug
+  dry-operation (~> 1.0)
   dry-struct (~> 1.6)
   dry-validation (~> 1.10)
   factory_bot_rails (~> 6.5)
@@ -481,6 +492,7 @@ DEPENDENCIES
   rspec-rails (~> 8.0)
   rubocop-rails-omakase
   selenium-webdriver
+  simple_form (~> 5.4)
   slim (~> 5.2)
   solid_cable
   solid_cache

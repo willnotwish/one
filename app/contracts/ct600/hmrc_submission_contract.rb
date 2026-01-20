@@ -8,21 +8,48 @@ module Ct600
     PoundsSterling = StrictTypes::PositiveInteger
 
     schema do
-      required(:non_trading_loan_profits).filled(PoundsSterling)
-      required(:profits_before_other_deductions_and_reliefs).filled(PoundsSterling)
-      required(:losses_on_unquoted_shares).filled(PoundsSterling)
-      required(:management_expenses).filled(PoundsSterling)
-    end
+      required(:company).hash do
+        required(:name).filled(:string)
+        required(:number).filled(:string)
+      end
 
-    rule(:losses_on_unquoted_shares, :profits_before_other_deductions_and_reliefs) do
-      if values[:losses_on_unquoted_shares] > values[:profits_before_other_deductions_and_reliefs]
-        key.failure(:hmrc9166)
+      required(:period).hash do
+        required(:starts_on).filled(:date)
+        required(:ends_on).filled(:date)
+      end
+
+      required(:figures).hash do
+        required(:non_trading_loan_profits_and_gains).filled(PoundsSterling)
+        required(:profits_before_other_deductions_and_reliefs).filled(PoundsSterling)
+        required(:losses_on_unquoted_shares).filled(PoundsSterling)
+        required(:management_expenses).filled(PoundsSterling)
       end
     end
 
-    rule(:management_expenses, :profits_before_other_deductions_and_reliefs, :losses_on_unquoted_shares) do
-      max = values[:profits_before_other_deductions_and_reliefs] - values[:losses_on_unquoted_shares]
-      key.failure(:hmrc9167) if values[:management_expenses] > max
+    # rule(:losses_on_unquoted_shares, :profits_before_other_deductions_and_reliefs) do
+    #   if values[:losses_on_unquoted_shares] > values[:profits_before_other_deductions_and_reliefs]
+    #     key.failure(:hmrc9166)
+    #   end
+    # end
+
+    # rule(:management_expenses, :profits_before_other_deductions_and_reliefs, :losses_on_unquoted_shares) do
+    #   max = values[:profits_before_other_deductions_and_reliefs] - values[:losses_on_unquoted_shares]
+    #   key.failure(:hmrc9167) if values[:management_expenses] > max
+    # end
+
+    rule(:figures) do
+      figures = values[:figures]
+
+      if figures[:losses_on_unquoted_shares] >
+         figures[:profits_before_other_deductions_and_reliefs]
+        key(:losses_on_unquoted_shares).failure(:hmrc9166)
+      end
+
+      max =
+        figures[:profits_before_other_deductions_and_reliefs] -
+        figures[:losses_on_unquoted_shares]
+
+      key(:management_expenses).failure(:hmrc9167) if figures[:management_expenses] > max
     end
   end
 end

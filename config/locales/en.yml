@@ -2,12 +2,19 @@ en:
   dry_validation:
     errors:
       rules:
+        period_ends_on:
+          format?: "must be in the format YYYY-MM-DD (for example 2025-03-31)"
+          invalid_date: "must be a valid date"
+          before_start: "must be after the period start date"
+        period_starts_on:
+          format?: "must be in the format YYYY-MM-DD (for example 2024-04-01)"
+          invalid_date: "must be a valid date"
         losses_on_unquoted_shares:
           max_scale_exceeded: "must not have more than %{max_scale} decimal places."
-          hmrc9166: "must not exceed profits before other deductions and reliefs."
+          hmrc9166: "must not exceed profits before other deductions and reliefs (9166)."
         management_expenses:
           max_scale_exceeded: "must not have more than %{max_scale} decimal places."
-          hmrc9167: "must not exceed profits before other deductions and reliefs minus losses."
+          hmrc9167: "must not exceed profits before other deductions and reliefs minus losses (9167)."
         amount:
           max_scale_exceeded: "must not have more than %{max_scale} decimal places."
         non_trading_loan_profits:

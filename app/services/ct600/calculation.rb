@@ -2,10 +2,13 @@
 
 # app/services/ct600/calculation.rb
 module Ct600
-  # Applies HMRC rules. A bit of a placeholder for now
+  # Applies HMRC rules. A bit of a placeholder for now.
+  # Returns result wrapped in Success
   class Calculation
+    include Dry::Monads[:result]
+
     def call(input)
-      input.transform_values(&:floor)
+      Success(input.transform_values(&:floor))
     end
   end
 end
