@@ -2,9 +2,9 @@
 
 # app/operations/ct600/submit_return.rb
 module Ct600
-  # ROP pipeline to generate ixbrl from form paarams
-  class SubmitReturnOperation < ApplicationOperation
-    # Executes a CT600 submission as a sequence of steps - a ROP pipeline.
+  # ROP pipeline to build ixbrl from form params
+  class BuildReturnOperation < ApplicationOperation
+    # Builds using a sequence of steps - a ROP pipeline.
     # If all steps succeed, it #call returns a results hash wrapped in a Success monad.
     # If a Failure is returned by any step, subsequent steps are skipped and the operation short circuited,
     # returning a Failure to the caller. Callers can inspect or pattern match to extract detailed results.

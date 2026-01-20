@@ -18,7 +18,7 @@ module Ct600
     attribute :losses_on_unquoted_shares, :decimal
     attribute :management_expenses, :decimal
 
-    def initialize(attributes = {}, operation: SubmitReturnOperation.new)
+    def initialize(attributes = {}, operation: BuildReturnOperation.new)
       super(attributes)
       @operation = operation
     end

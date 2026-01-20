@@ -3,7 +3,7 @@
 require "rails_helper"
 
 module Ct600
-  RSpec.describe SubmitReturnOperation do
+  RSpec.describe BuildReturnOperation do
     subject(:operation) { described_class.new }
 
     let(:metadata) do
