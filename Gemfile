@@ -58,7 +58,7 @@ group :development, :test do
 
   gem "faker", "~> 3.5"
 
-  gem "byebug", "~> 12.0"
+  gem "byebug", "~> 13.0"
 
   gem "factory_bot_rails", "~> 6.5"
 end
