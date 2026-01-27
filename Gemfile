@@ -82,3 +82,7 @@ gem "dry-struct", "~> 1.6"
 gem "dry-operation", "~> 1.0"
 
 gem "simple_form", "~> 5.4"
+
+gem "climate_control", "~> 1.2"
+
+gem "aasm", "~> 5.5"

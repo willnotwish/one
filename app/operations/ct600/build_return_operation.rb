@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# app/operations/ct600/submit_return.rb
+# app/operations/ct600/build_return_operation.rb
 module Ct600
   # ROP pipeline to build ixbrl from form params
   class BuildReturnOperation < ApplicationOperation
