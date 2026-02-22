@@ -47,6 +47,8 @@ module Hmrc
     end
 
     describe 'state machine' do
+      let(:hmrc_reference) { 'HMRC123' }
+
       before { attempt.save! }
 
       it 'starts in the pending state' do
@@ -55,36 +57,87 @@ module Hmrc
 
       context 'when marking as submitted' do
         it 'transitions from pending to submitted' do
-          attempt.mark_submitted!
+          attempt.mark_submitted!(hmrc_reference:)
+
           expect(attempt).to be_submitted
+          expect(attempt).to be_complete
+          expect(attempt.hmrc_reference).to eq(hmrc_reference)
+          expect(attempt.completed_at).to be_within(1.second).of(Time.now)
         end
       end
 
       context 'when marking as failed' do
+        let(:failure_type) { 'fooey type' }
+        let(:failure_status) { 400 }
+        let(:failure_body) { '<Error>Rejected</Error>' }
+
         it 'transitions from pending to failed' do
-          attempt.mark_failed!
+          attempt.mark_failed!(failure_type:, failure_status:, failure_body:)
           expect(attempt).to be_failed
-        end
-      end
-
-      context 'when retrying' do
-        before { attempt.mark_failed! }
-
-        it 'transitions from failed back to pending' do
-          attempt.retry!
-          expect(attempt).to be_pending
+          expect(attempt).to be_complete
+          expect(attempt.hmrc_reference).to be_nil
+          expect(attempt.failure_type).to eq(failure_type)
+          expect(attempt.failure_status).to eq(failure_status)
+          expect(attempt.failure_body).to eq(failure_body)
+          expect(attempt.completed_at).to be_within(1.second).of(Time.now)
         end
       end
 
       context 'invalid transitions' do
-        it 'does not allow retry from pending' do
-          expect { attempt.retry! }.to raise_error(AASM::InvalidTransition)
-        end
+        let(:failure_type) { 'fooey type' }
+        let(:failure_status) { 400 }
+        let(:failure_body) { 'bar' }
 
         it 'does not allow marking submitted from failed' do
-          attempt.mark_failed!
-          expect { attempt.mark_submitted! }.to raise_error(AASM::InvalidTransition)
+          attempt.mark_failed!(failure_type:, failure_status:, failure_body:)
+          expect { attempt.mark_submitted!(hmrc_reference:) }.to raise_error(AASM::InvalidTransition)
         end
+      end
+    end
+
+    describe 'notification' do
+      let(:utr) { "1234567890" }
+      let(:ixbrl) { "<ixbrl>valid</ixbrl>" }
+      let(:submission_key) { Digest::SHA256.hexdigest(ixbrl) }
+
+      it "calls the notifier when marked submitted" do
+        fake_instance = double("Notifier instance", call: true)
+        fake_class = double("Notifier class", new: fake_instance)
+
+        # stub the class-level notifier_class to return our fake class
+        allow(described_class).to receive(:notifier_class).and_return(fake_class)
+
+        expect(fake_instance).to receive(:call).with(attempt)
+
+        attempt.mark_submitted!(hmrc_reference: "HMRC123")
+      end
+
+      it "calls the notifier when marked failed" do
+        fake_instance = double("Notifier instance", call: true)
+        fake_class = double("Notifier class", new: fake_instance)
+
+        # stub the class-level notifier_class to return our fake class
+        allow(described_class).to receive(:notifier_class).and_return(fake_class)
+
+        expect(fake_instance).to receive(:call).with(attempt)
+
+        attempt.mark_failed!(
+          failure_type: :hmrc_rejected_submission,
+          failure_status: 400,
+          failure_body: "<Error>Rejected</Error>"
+        )
+      end
+
+      it "calls the notifier when marked awaiting_manual_resolution" do
+        fake_instance = double("Notifier instance", call: true)
+        fake_class = double("Notifier class", new: fake_instance)
+
+        # stub the class-level notifier_class to return our fake class
+        allow(described_class).to receive(:notifier_class).and_return(fake_class)
+
+        expect(fake_instance).to receive(:call).with(attempt)
+
+        attempt.mark_awaiting_manual_resolution!
       end
     end
   end

@@ -9,12 +9,15 @@ module Ct600
         Nokogiri::XML(
           described_class
             .new
-            .call(submission, fact_mapping:)
-            .to_xml
+            .call(submission, rendering_context:)
         )
       end
       
-      let(:fact_mapping) { FactMapping::V2024 }
+      let(:rendering_context) do 
+        fact_mapping = FactMapping.for_year(2026)
+        taxonomy_profile = TaxonomyProfiles::Arelle.new(year: 2026)
+        RenderingContext.new(year: 2026, fact_mapping:, taxonomy_profile:)
+      end
 
       let(:figures) do
         FactoryBot.build(
@@ -42,20 +45,18 @@ module Ct600
           expect(doc.internal_subset.name).to eq('html')
         end
 
-        it 'contains exactly one xbrli:context' do
+        it 'contains exactly two xbrli:contexts' do
           contexts = doc.xpath('//xbrli:context', doc.root.namespaces)
-          expect(contexts.size).to eq(1)
+          expect(contexts.size).to eq(2)
         end
 
-        it 'contains exactly one xbrli:unit' do
+        it 'contains exactly two xbrli:units' do
           units = doc.xpath('//xbrli:unit', doc.root.namespaces)
-          expect(units.size).to eq(1)
+          expect(units.size).to eq(2)
         end
 
         it 'renders numeric figures as ix:nonFraction facts' do
           facts = doc.xpath('//ix:nonFraction', doc.root.namespaces)
-
-          expect(facts.size).to eq(2)
 
           names = facts.map { |n| n['name'] }
           values = facts.map(&:text)

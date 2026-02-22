@@ -13,19 +13,35 @@ module Ct600
 
     private
 
-    def step_with_logging(step_name)
+    def execute_service_step(step_name, service:, **args)
       logger.tagged(operation_tag, step_name) do
-        logger.debug('Starting...')
-        step(yield).tap { |result| log_step_result(result) }
+        logger.debug "Starting service step: #{step_name}, service class: #{service.class.name}"
+        result = service.call(**args)
+                        .tap { |r| log_result(r) }
+        step(result)
       end
     end
 
-    def log_step_result(result)
+    def execute_step(step_name)
+      raise ArgumentError, 'requires block' unless block_given?
+
+      logger.tagged(operation_tag, step_name) do
+        logger.debug "Starting step: #{step_name}"
+        result = yield
+        log_result(result)
+        step(result)
+      end
+    end
+    alias step_with_logging execute_step
+
+    def log_result(result)
       case result
       when Dry::Monads::Success
-        logger.info 'Success'
+        logger.info "Success: #{result.success.inspect}"
       when Dry::Monads::Failure
         logger.warn "Failure: #{result.failure.inspect}"
+      else
+        logger.error "Steps must return Success or Failure. You returned: #{result}"
       end
     end
 

@@ -18,8 +18,11 @@ module Ct600
     attribute :losses_on_unquoted_shares, :decimal
     attribute :management_expenses, :decimal
 
+    attribute :profile, :string, default: 'arelle'
+
     def initialize(attributes = {}, operation: BuildReturnOperation.new)
       super(attributes)
+
       @operation = operation
     end
 
@@ -28,7 +31,8 @@ module Ct600
 
     # Returns true on success (valid XHTML produced), false otherwise
     def submit
-      @operation.call(attributes.symbolize_keys)
+      ct600_params = attributes.except('profile').symbolize_keys
+      @operation.call(params: ct600_params, profile: profile.to_sym)
                 .either(
                   ->(success) { handle_success(success) },
                   ->(failure) { assign_errors_from(failure) }

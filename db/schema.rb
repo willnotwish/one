@@ -10,8 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_27_110435) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_03_150746) do
   create_table "hmrc_submission_attempts", charset: "utf8mb4", collation: "utf8mb4_uca1400_ai_ci", force: :cascade do |t|
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.text "failure_body"
     t.integer "failure_status"
@@ -19,7 +20,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_110435) do
     t.string "hmrc_reference"
     t.integer "status", null: false
     t.string "submission_key", null: false
-    t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.string "utr", null: false
     t.index ["status"], name: "index_hmrc_submission_attempts_on_status"

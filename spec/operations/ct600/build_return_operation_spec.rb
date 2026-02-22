@@ -27,7 +27,7 @@ module Ct600
     describe '#call' do
       context 'when all steps succeed' do
         it 'returns Success(ixbrl)' do
-          result = operation.call(params)
+          result = operation.call(params:)
 
           expect(result).to be_a(Dry::Monads::Result::Success)
 
@@ -44,7 +44,7 @@ module Ct600
         end
 
         it 'returns Failure from validate_input and short-circuits' do
-          result = operation.call(params)
+          result = operation.call(params:)
 
           expect(result).to be_a(Dry::Monads::Result::Failure)
 
@@ -67,7 +67,7 @@ module Ct600
         end
 
         it 'returns Failure from validate_hmrc_submission' do
-          result = operation.call(params)
+          result = operation.call(params:)
 
           expect(result).to be_failure
 

@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :hmrc_submission_attempt, class: "Hmrc::SubmissionAttempt" do
-    utr { "1234567890" }
-
+  factory :hmrc_submission_attempt, class: 'Hmrc::SubmissionAttempt' do
     submission_key do
       Digest::SHA256.hexdigest("ixbrl-payload:#{utr}")
     end
 
     status { :pending }
 
+    utr { generate(:unique_utr) }
+
     hmrc_reference { nil }
-    submitted_at   { nil }
+    completed_at   { nil }
 
     failure_type   { nil }
     failure_status { nil }
@@ -19,15 +19,16 @@ FactoryBot.define do
 
     trait :submitted do
       status { :submitted }
-      hmrc_reference { "ABC123456789" }
-      submitted_at { Time.current }
+      hmrc_reference { 'ABC123456789' }
+      completed_at { Time.current }
     end
 
     trait :failed do
       status { :failed }
       failure_type   { :hmrc_rejected_submission }
       failure_status { 400 }
-      failure_body   { "<error/>" }
+      failure_body   { '<error/>' }
+      completed_at { Time.current }
     end
   end
 end

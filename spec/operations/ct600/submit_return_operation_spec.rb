@@ -1,92 +1,107 @@
-# frozen_string_literal: true
-
-require 'rails_helper'
-
 # spec/operations/ct600/submit_return_operation_spec.rb
-# Tests three main contexts:
-# - happy path
-# - OAuth failure
-# - submission failure
+require "rails_helper"
+
 module Ct600
   RSpec.describe SubmitReturnOperation do
-    subject(:operation) { described_class.new }
+    let(:ixbrl) { "<ixbrl/>" }
+    let(:utr)   { "1234567890" }
 
-    let(:ixbrl) { '<ixbrl>valid</ixbrl>' }
-    let(:utr) { '1111222233' }
-    let(:oauth_token) { instance_double(Hmrc::OauthToken, authorization_header: 'Bearer test-token') }
-    let(:oauth_client) { instance_double(Hmrc::OauthApiClient) }
-    let(:submission_client) { instance_double(Hmrc::Ct600::SubmissionApiClient) }
+    let(:attempt) { Hmrc::SubmissionAttempt.new(submission_key: "abc123", utr: utr) }
+    let(:raw_response) { { status: 200, body: "<ReceiptID>HMRC123</ReceiptID>" } }
+    let(:parsed_response) { { status: 200, hmrc_reference: "HMRC123", body: raw_response[:body] } }
+
+    # Service doubles
+    let(:idempotency_guard) do
+      instance_double(Hmrc::Submissions::IdempotencyGuard, call: Dry::Monads::Result::Success.new(attempt))
+    end
+
+    let(:oauth_client) do
+      instance_double(Hmrc::OauthApiClient, call: Dry::Monads::Result::Success.new("fake-token"))
+    end
+
+    let(:submission_client) do
+      instance_double(Hmrc::Ct600::SubmissionApiClient, call: Dry::Monads::Result::Success.new(raw_response))
+    end
+
+    let(:response_parser) do
+      instance_double(Hmrc::Submissions::ResponseParser, call: Dry::Monads::Result::Success.new(parsed_response))
+    end
+
+    let(:outcome_recorder) do
+      instance_double(Hmrc::Submissions::OutcomeRecorder, call: Dry::Monads::Result::Success.new(parsed_response))
+    end
+
+    subject(:operation) do
+      SubmitReturnOperation.new(
+        idempotency_guard: idempotency_guard,
+        oauth_client: oauth_client,
+        submission_client: submission_client,
+        response_parser: response_parser,
+        outcome_recorder: outcome_recorder
+      )
+    end
+
+    let(:stdout_logger) do
+      ActiveSupport::TaggedLogging.new(Logger.new($stdout))
+                                  .tap { |logger| logger.level = Logger::DEBUG }
+    end
 
     before do
-      allow(Hmrc::OauthApiClient).to receive(:new).and_return(oauth_client)
-      allow(Hmrc::Ct600::SubmissionApiClient).to receive(:new).and_return(submission_client)
+      Rails.logger = stdout_logger
     end
 
-    context 'when oauth and submission succeed' do
-      let(:submission_response) do
-        { status: 200, body: '<ok/>' }
-      end
+    it "orchestrates all steps and returns Success with the parsed response" do
+      result = operation.call(ixbrl:, utr:)
 
-      before do
-        allow(oauth_client)
-          .to receive(:call)
-          .and_return(Dry::Monads::Success(oauth_token))
-
-        allow(submission_client)
-          .to receive(:call)
-          .with(ixbrl: ixbrl, utr: utr, oauth_token: oauth_token)
-          .and_return(Dry::Monads::Success(submission_response))
-      end
-
-      it 'returns Success' do
-        result = operation.call(ixbrl: ixbrl, utr: utr)
-
-        expect(result).to be_success
-        expect(result.value!).to eq(submission_response)
-      end
+      expect(result).to be_a(Dry::Monads::Success)
+      expect(result.value!).to eq(parsed_response)
     end
 
-    context 'when oauth fails' do
-      let(:failure) do 
-        { type: :oauth_http_error }
-      end
+    it "calls all services with correct arguments in order" do
+      expect(idempotency_guard).to receive(:call).with(ixbrl:, utr:)
+      expect(oauth_client).to receive(:call)
+      expect(submission_client).to receive(:call).with(ixbrl:, oauth_token: "fake-token", utr:)
+      expect(response_parser).to receive(:call).with(ixbrl:, raw_hmrc_response: raw_response)
+      expect(outcome_recorder).to receive(:call).with(parsed_response:, attempt:)
 
-      before do
-        allow(oauth_client)
-          .to receive(:call)
-          .and_return(Dry::Monads::Failure(failure))
-      end
-
-      it 'returns Failure and does not submit' do
-        result = operation.call(ixbrl: ixbrl, utr: utr)
-
-        expect(result).to be_failure
-        expect(result.failure).to eq(failure)
-
-        expect(submission_client).not_to receive(:call)
-      end
+      operation.call(ixbrl:, utr:)
     end
 
-    context 'when submission fails' do
-      let(:failure) do
-        { type: :submission_http_error }
+    context "when HMRC submission succeeds but outcome recording fails" do
+      let(:failure_payload) do
+        {
+          type: :post_external_side_effect_failure,
+          step: :record_outcome,
+          hmrc_reference: "HMRC123",
+          cause: :db_timeout
+        }
       end
 
-      before do
-        allow(oauth_client)
-          .to receive(:call)
-          .and_return(Dry::Monads::Success(oauth_token))
-
-        allow(submission_client)
-          .to receive(:call)
-          .and_return(Dry::Monads::Failure(failure))
+      let(:outcome_recorder) do
+        instance_double(
+          Hmrc::Submissions::OutcomeRecorder,
+          call: Dry::Monads::Failure(failure_payload)
+        )
       end
 
-      it 'returns Failure' do
-        result = operation.call(ixbrl: ixbrl, utr: utr)
+      it "halts the operation and returns the failure unchanged" do
+        result = operation.call(ixbrl:, utr:)
 
-        expect(result).to be_failure
-        expect(result.failure).to eq(failure)
+        expect(result).to be_a(Dry::Monads::Failure)
+        expect(result.failure).to eq(failure_payload)
+      end
+
+      it "does not attempt any further steps after the failure" do
+        # Nothing comes after outcome_recorder today,
+        # but this protects you if future steps are added.
+
+        expect(idempotency_guard).to receive(:call)
+        expect(oauth_client).to receive(:call)
+        expect(submission_client).to receive(:call)
+        expect(response_parser).to receive(:call)
+        expect(outcome_recorder).to receive(:call)
+
+        operation.call(ixbrl:, utr:)
       end
     end
   end

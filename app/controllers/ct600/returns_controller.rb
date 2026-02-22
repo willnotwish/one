@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/ct600/returns_controller.rb
 module Ct600
   # Corporation tax returns controller
   class ReturnsController < ApplicationController
@@ -10,7 +9,7 @@ module Ct600
 
     def create
       if @form.submit
-        render plain: @form.ixbrl, content_type: 'text/plain'
+        render :show
       else
         render :new, status: :unprocessable_entity
       end
@@ -31,7 +30,7 @@ module Ct600
 
     def ct600_return_params
       params.fetch(:ct600_return_form, FIELD_DEFAULTS)
-            .permit(FIELD_DEFAULTS.keys)
+            .permit(FIELD_DEFAULTS.keys + [:profile])
             .to_h
     end
 
