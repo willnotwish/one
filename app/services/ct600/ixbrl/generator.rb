@@ -5,15 +5,12 @@ module Ct600
   module Ixbrl
     # Generates compatible XML from a given submission definition
     class Generator
-      LOCAL_TAXONOMY_PATHS = {
-        frs: 'taxonomies/FRC-2026-Taxonomy-v1.0.0/FRS-102/2026-01-01/FRS-102-2026-01-01.xsd',
-        ct: 'taxonomies/HMRC-CT-2014-v1-994/CT-2014-v1-994.xsd'
-      }
-
       # submission: Ct600::Submission instance (previously validated) containing figures, company & period
-      # fact_mapping: versioned fact mapping (e.g., FactMapping::V2024)
-      # opts: any optional args, e.g., context/unit refs
-      def call(submission, fact_mapping:, **opts)
+      # rendering_context: versioned fact mapping and taxonomy profile
+      def call(submission, rendering_context:)
+        fact_mapping = rendering_context.fact_mapping
+        taxonomy_profile = rendering_context.taxonomy_profile
+  
         Nokogiri::XML::Builder.new(encoding: 'UTF-8') do |xml|
           build_doctype(xml)
 
@@ -24,29 +21,17 @@ module Ct600
               xml.div(style: 'display:none') do
                 xml['ix'].header do
                   xml['ix'].references do
-                    fact_mapping_schema_refs(xml, taxonomy_paths: LOCAL_TAXONOMY_PATHS.values, **opts)
+                    fact_mapping_schema_refs(xml:, taxonomy_paths: taxonomy_profile.schema_hrefs)
                   end
 
                   xml['ix'].resources do
-                    Nodes::Context
-                      .new
-                      .call(xml: xml, company: submission.company, period: submission.period, id: 'ctx')
-
-                    Nodes::Unit
-                      .new
-                      .call(xml: xml, id: 'GBP', measure: 'iso4217:GBP')
+                    build_contexts(xml:, company: submission.company, period: submission.period, fact_mapping:)
+                    build_units(xml:, fact_mapping:)
                   end
                 end
               end
 
-              fact_builder = Nodes::Fact.new
-
-              Mappings::FactsFromFigures
-                .new
-                .call(submission.figures, fact_mapping: fact_mapping, **opts)
-                .each do |fact|
-                  fact_builder.call(fact, xml: xml)
-                end
+              build_facts(xml:, submission:, fact_mapping:)
             end
           end
         end.to_xml
@@ -59,13 +44,52 @@ module Ct600
         xml.doc.create_internal_subset('html', nil, nil)
       end
 
-      def fact_mapping_schema_refs(xml, taxonomy_paths:, **)
+      def build_contexts(xml:, company:, period:, fact_mapping:, builder: Nodes::Context.new)
+        fact_mapping
+          .values
+          .map(&:context_ref)
+          .uniq
+          .map { |name| Contexts.context_for(name) }
+          .each { |context_spec| builder.call(xml:, company:, period:, **context_spec ) }
+      end
+
+      def build_facts(xml:, submission:, fact_mapping:, builder: Nodes::Fact.new)
+        fact_mapping.values.each do |spec|
+          value = extract_value(submission:, spec:)
+          builder.call(xml:, spec:, value:)
+        end
+      end
+
+      def build_units(xml:, fact_mapping:, builder: Nodes::Unit.new)
+        fact_mapping
+          .values
+          .map(&:unit_ref)
+          .compact
+          .uniq
+          .each { |unit_ref| builder.call(xml:, id: unit_ref, measure: Units.measure_for(unit_ref)) }
+      end
+
+      def fact_mapping_schema_refs(xml:, taxonomy_paths:)
         taxonomy_paths.each do |local_path|
           xml['link'].schemaRef(
             'xlink:type' => 'simple',
             'xlink:href' => local_path
           )
         end
+      end
+
+      def extract_value(submission:, spec:)
+        source_object =
+          case spec.source
+          when :company    then submission.company
+          when :period     then submission.period
+          when :figures    then submission.figures
+          when :submission then submission
+          else
+            raise "Unknown source #{spec.source}"
+          end
+
+        source_object.public_send(spec.source_attribute)
       end
     end
   end

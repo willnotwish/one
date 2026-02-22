@@ -1,0 +1,25 @@
+h2 Arelle validation
+
+- if @validation
+  p Status: #{@validation[:status]}
+  p Duration: #{@validation[:duration_ms]} ms
+
+  h3 Errors
+  - if @validation[:errors].any?
+    ul
+      - @validation[:errors].each do |e|
+        li = e
+  - else
+    p None
+
+  h3 Warnings
+  - if @validation[:warnings].any?
+    ul
+      - @validation[:warnings].each do |w|
+        li = w
+  - else
+    p None
+
+- if @error
+  h3 Failure
+  pre = @error.inspect

@@ -1,5 +1,5 @@
 module Hmrc
   def self.table_name_prefix
-    "hmrc_"
+    'hmrc_'
   end
 end

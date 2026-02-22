@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# app/api_clients/hmrc/oauth_api_client.rb
+require 'net/http'
+
 module Hmrc
   # Used to obtain an access token from HMRC endpoint.
   # Mondaic - suitable for direct use as an operation step.

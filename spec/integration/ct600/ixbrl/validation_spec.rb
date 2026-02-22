@@ -8,6 +8,7 @@ module Ct600
   module Ixbrl
     RSpec.describe 'Ct600 iXBRL Integration', type: :integration do
       let(:generator) { Generator.new }
+      let(:rendering_context) { RenderingContextBuilder.new.call(year: 2024, profile: :arelle) }
       let(:output_dir) { '/output' }
 
       # Output helper. Writes given xml to output file for subsequent validation wth arelle
@@ -20,7 +21,7 @@ module Ct600
       it 'generates valid iXBRL for a minimal 2024-compliant submission' do
         submission = FactoryBot.build(:ct600_submission)
 
-        xml = generator.call(submission, fact_mapping: FactMapping::V2024)
+        xml = generator.call(submission, rendering_context:)
         path = write_output_file(xml, 'ct600_2024_minimal.xhtml')
         expect(File.exist?(path)).to be_truthy
       end

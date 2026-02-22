@@ -1,0 +1,6 @@
+h1 Validate iXBRL with Arelle
+
+= form_with url: validation_path, method: :post do
+  = text_area_tag :ixbrl, @ixbrl, rows: 30, cols: 120
+  br
+  = submit_tag "Run Arelle Validation"

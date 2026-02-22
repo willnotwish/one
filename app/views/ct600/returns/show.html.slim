@@ -1,20 +1,23 @@
-/ app/views/ct600/returns/show.html.slim
-h1 Calculated CT600 Figures
+h1 CT600 iXBRL Preview
 
-p
-  strong Non-Trading Loan Profits:
-  = result.submission[:non_trading_loan_profits]
+section
+  h3 #{@form.submission.company.name} (#{@form.submission.company.number})
+  h4 From #{@form.submission.period.starts_on.to_fs(:long)} to #{@form.submission.period.ends_on.to_fs(:long)}
+  h4 Profile: #{@form.profile}
+hr
 
-p
-  strong Profits Before Other Deductions and Reliefs:
-  = result.submission[:profits_before_other_deductions_and_reliefs]
+section
+  h3 Generated iXBRL
+  pre style="white-space: pre-wrap; font-family: monospace"
+    = h(@form.ixbrl)
 
-p
-  strong Losses on Unquoted Shares:
-  = result.submission[:losses_on_unquoted_shares]
+- if @form.profile == 'arelle'
+  h2 Validate with Arelle
+  p You can validate this iXBRL with Arelle. You may edit the generated iXBRL first if necessary.
+  = form_with(url: ct600_validation_path, method: :post) do
+    = text_area_tag(:ixbrl, @form.ixbrl, rows: 30, style: "width: 100%; font-family: monospace;")
+    br
+    = submit_tag 'Validate now'
 
-p
-  strong Management Expenses:
-  = result.submission[:management_expenses]
-
-= link_to "Back", new_ct600_return_path
+hr
+= link_to 'Back to form', new_ct600_return_path

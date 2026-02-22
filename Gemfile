@@ -72,6 +72,7 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  gem "webmock"
 end
 
 gem "slim", "~> 5.2"
@@ -86,3 +87,6 @@ gem "simple_form", "~> 5.4"
 gem "climate_control", "~> 1.2"
 
 gem "aasm", "~> 5.5"
+
+gem "dry-container", "~> 0.11.0"
+gem "dry-auto_inject", "~> 1.1"

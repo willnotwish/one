@@ -8,7 +8,7 @@ module Ct600
     # If all steps succeed, it #call returns a results hash wrapped in a Success monad.
     # If a Failure is returned by any step, subsequent steps are skipped and the operation short circuited,
     # returning a Failure to the caller. Callers can inspect or pattern match to extract detailed results.
-    def call(params)
+    def call(params:, profile: :arelle)
       input_form_contract = InputContract.new
       hmrc_submission_contract = HmrcSubmissionContract.new
 
@@ -44,8 +44,12 @@ module Ct600
         validate_against_contract(input: submission.to_h, contract: hmrc_submission_contract)
       end
 
+      rendering_context = step_with_logging(:build_rendering_context) do
+        build_rendering_context(submission:, profile:)
+      end
+
       ixbrl = step_with_logging(:render_ixbrl) do
-        render_ixbrl(submission)
+        render_ixbrl(submission, rendering_context:)
       end
 
       { input:, coerced:, submission:, ixbrl: } # results hash returned to the caller (wrapped in a Success)
@@ -79,11 +83,15 @@ module Ct600
     end
 
     def build_company(company_name:, company_number:, **)
-      Success(Company.new(name: company_name, number: company_number))
+      Success(
+        Company.new(name: company_name, number: company_number)
+      )
     end
 
     def build_period(period_starts_on:, period_ends_on:, **)
-      Success(Period.new(starts_on: period_starts_on, ends_on: period_ends_on))
+      Success(
+        Period.new(starts_on: period_starts_on, ends_on: period_ends_on)
+      )
     end
 
     def calculate_figures(input)
@@ -98,16 +106,26 @@ module Ct600
 
     # Builds an immutable Submission value object
     def build_submission(company:, period:, figures:)
-      Success(Submission.new(company:, period:, figures:))
+      Success(
+        Submission.new(company:, period:, figures:)
+      )
+    end
+
+    def build_rendering_context(submission:, profile:)
+      year = submission.period.ends_on.year
+      # Assume profile and year are supported.
+      # If not, it's a coding error to have got this far.
+      Success(
+        Ixbrl::RenderingContextBuilder.new.call(year:, profile:)
+      )
     end
 
     # Renders a submission as ixbrl
-    def render_ixbrl(submission)
-      # TODO. Retrieve fact mapping in a context-sensitive way
-      fact_mapping = Ixbrl::FactMapping::V2024 # for now
-
+    def render_ixbrl(submission, rendering_context:)
       # The generator is not monadic, but has no failure modes (yet). Hence the Success wrapper
-      Success(Ixbrl::Generator.new.call(submission, fact_mapping:))
+      Success(
+        Ixbrl::Generator.new.call(submission, rendering_context:)
+      )
     end
   end
 end

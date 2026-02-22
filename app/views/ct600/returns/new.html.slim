@@ -23,4 +23,17 @@ h1 CT600 submission
     = f.input :losses_on_unquoted_shares
     = f.input :management_expenses
 
+  fieldset
+    legend iXBRL Profile
+
+    = f.input :profile,
+              as: :select,
+              collection: [ \
+                ['Arelle (local validation)', 'arelle'], \
+                ['HMRC Sandbox', 'hmrc_sandbox'], \
+                ['HMRC Production', 'production'] \
+              ],
+              include_blank: false,
+              prompt: 'Select profile'
+
   = f.button :submit, 'Generate iXBRL'
