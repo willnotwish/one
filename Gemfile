@@ -77,7 +77,7 @@ end
 
 gem "slim", "~> 5.2"
 
-gem "dry-validation", "~> 1.10"
+gem "dry-validation", "~> 1.11"
 gem "dry-struct", "~> 1.6"
 
 gem "dry-operation", "~> 1.0"
