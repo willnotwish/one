@@ -2,8 +2,8 @@
 
 # app/operations/ct600/submit_return_operation.rb
 module Ct600
-  # ROP pipeline to validsate iXBRL using an external Arelle service
-  class ValidateReturnOperation < ApplicationOperation
+  # ROP pipeline to validate iXBRL accounts using an external Arelle service
+  class ValidateAccountsIxbrlOperation < ApplicationOperation
     Import = Dry::AutoInject(Arelle::ServiceContainer)
 
     include Import[
@@ -12,7 +12,7 @@ module Ct600
       'validations.arelle_response_parser'
     ]
 
-    # Submits using a sequence of steps - a ROP pipeline.
+    # Validates using a sequence of steps - a ROP pipeline.
     # If all steps succeed, #call returns a result hash wrapped in a Success monad.
     # If a Failure is returned by any step, subsequent steps are skipped and the operation short circuited,
     # returning a Failure to the caller. Callers can inspect or pattern match to extract detailed results.

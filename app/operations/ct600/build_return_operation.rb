@@ -44,15 +44,27 @@ module Ct600
         validate_against_contract(input: submission.to_h, contract: hmrc_submission_contract)
       end
 
-      rendering_context = step_with_logging(:build_rendering_context) do
+      # Legacy CT600 XML
+      xml_schema_context = step_with_logging(:build_xml_schema_context) do
+        build_xml_schema_context(period:)
+      end
+
+      legacy_xml = step_with_logging(:render_xml) do
+        render_xml(submission:, schema_version: xml_schema_context.version)
+      end
+
+      # iXBRL
+      ixbrl_rendering_context = step_with_logging(:build_rendering_context) do
         build_rendering_context(submission:, profile:)
       end
 
       ixbrl = step_with_logging(:render_ixbrl) do
-        render_ixbrl(submission, rendering_context:)
+        render_ixbrl(submission, rendering_context: ixbrl_rendering_context)
       end
 
-      { input:, coerced:, submission:, ixbrl: } # results hash returned to the caller (wrapped in a Success)
+      # results hash returned to the caller (wrapped in a Success).
+      # TODO: consider replacing this with a domain result (value) object
+      { input:, coerced:, submission:, legacy_xml:, ixbrl: }
     end
 
     private
@@ -62,7 +74,7 @@ module Ct600
 
     # Normalize initial parameters by extracting native Date from Rails date helper format
     def normalize_params(params)
-      NormalizeParamsOperation.new.call(params) # operations always return monads, so no need for Success/failure wrapping
+      NormalizeParamsOperation.new.call(params)
     end
 
     # Coerces ISO8601-formatted period start & end dates into native Date objects
@@ -108,6 +120,18 @@ module Ct600
     def build_submission(company:, period:, figures:)
       Success(
         Submission.new(company:, period:, figures:)
+      )
+    end
+
+    def build_xml_schema_context(period:)
+      service = LegacyXml::SchemaContextBuilder.new
+      service.call(period:)
+    end
+
+    def render_xml(submission:, schema_version:, utr: Hmrc::Ct600Config.utr)
+      service = LegacyXml::Generator.new
+      Success(
+        service.call(submission:, schema_version:, utr:)
       )
     end
 

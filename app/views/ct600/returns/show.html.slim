@@ -1,4 +1,4 @@
-h1 CT600 iXBRL Preview
+h1 CT600 submission preview
 
 section
   h3 #{@form.submission.company.name} (#{@form.submission.company.number})
@@ -7,17 +7,33 @@ section
 hr
 
 section
+  h3 Generated XML (legacy)
+  pre style="white-space: pre-wrap; font-family: monospace"
+    = h(@form.legacy_xml)
+
   h3 Generated iXBRL
   pre style="white-space: pre-wrap; font-family: monospace"
     = h(@form.ixbrl)
 
 - if @form.profile == 'arelle'
-  h2 Validate with Arelle
-  p You can validate this iXBRL with Arelle. You may edit the generated iXBRL first if necessary.
+  h2 Validate generated XML
+  p You may validate each generated XML. You may edit the markup first if necessary.
   = form_with(url: ct600_validation_path, method: :post) do
+    p You may validate legacy xml against various versions. Be aware, though, that if you select ...
+    - selected_schema = Ct600::LegacyXml::SchemaContextBuilder.new.call(period: @form.submission.period).value!
+    = label_tag :schema_version
+    = select_tag :schema_version, options_for_select(Ct600::LegacyXml::SchemaContextBuilder.available_versions, selected_schema.version)
+    br
+
+    = label_tag :legacy_xml, 'Legacy XML'
+    = text_area_tag(:legacy_xml, @form.legacy_xml, rows: 20, style: "width: 100%; font-family: monospace;")
+    br
+    = button_tag "Validate Legacy XML", type: "submit", name: "validation_type", value: "legacy_xml"
+
+    hr
+    = label_tag :ixbrl, 'Accounts iXBRL'
     = text_area_tag(:ixbrl, @form.ixbrl, rows: 30, style: "width: 100%; font-family: monospace;")
     br
-    = submit_tag 'Validate now'
-
+    = button_tag "Validate Accounts iXBRL", type: "submit", name: "validation_type", value: "accounts_ixbrl"
 hr
 = link_to 'Back to form', new_ct600_return_path

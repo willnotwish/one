@@ -14,14 +14,14 @@ module Arelle
         errors   = Array(body['errors'])
         warnings = Array(body['warnings'])
 
-        normalized = {
-          status: errors.empty? ? :ok : :invalid,
-          errors:,
-          warnings:,
+        result = Ct600::Validation::Result.new(
+          valid: errors.empty?,
+          errors: errors,
+          warnings: warnings,
           duration_ms: body.dig('meta', 'duration_ms')
-        }
+        )
 
-        Success(normalized)
+        Success(result)
       rescue JSON::ParserError => e
         Failure(type: :invalid_json, message: e.message)
       end

@@ -7,17 +7,34 @@ module Ct600
     end
 
     def create
-      @ixbrl = params[:ixbrl]
+      @type = params[:validation_type]
 
-      operation = ValidateReturnOperation.new
-      result = operation.call(ixbrl: @ixbrl)
-      if result.success?
-        @validation = result.value!
-      else
-        @error = result.failure
-      end
+      result =
+        case @type
+        when 'accounts_ixbrl'
+          @ixbrl = params[:ixbrl]
+          ValidateAccountsIxbrlOperation.new.call(ixbrl: @ixbrl)
+
+        when 'legacy_xml'
+          @xml = params[:legacy_xml]
+          @schema_version = params[:schema_version]
+          ValidateLegacyXmlOperation.new.call(xml: @xml, schema_version: @schema_version)
+        else
+          raise ArgumentError, "Unknown validation type: #{@type}"
+        end
+
+      @validation = if result.success?
+                      result.value!
+                    else
+                      result.failure
+                    end
 
       render :show
+    end
+
+    private
+
+    def extract_period
     end
   end
 end

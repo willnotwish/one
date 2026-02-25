@@ -8,8 +8,6 @@ module Ct600
       attribute :fact_mapping,
                 Types::Hash.map(Types::Symbol, Types.Instance(FactSpecification))
       attribute :taxonomy_profile, Types.Instance(TaxonomyProfiles::Base)
-
-      # attribute? :mode, Types::Symbol
     end
   end
 end

@@ -27,7 +27,7 @@ module Ct600
     end
 
     # Public API
-    attr_reader :ixbrl, :submission
+    attr_reader :ixbrl, :legacy_xml, :submission
 
     # Returns true on success (valid XHTML produced), false otherwise
     def submit
@@ -52,6 +52,8 @@ module Ct600
     def handle_success(success)
       @submission = success[:submission]
       @ixbrl = success[:ixbrl]
+      @legacy_xml = success[:legacy_xml]
+
       true
     end
   end
